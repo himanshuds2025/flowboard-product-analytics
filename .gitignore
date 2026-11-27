@@ -1,0 +1,25 @@
+# dbt generated files
+**/target/
+**/dbt_packages/
+**/logs/
+**/.user.yml
+
+# credentials
+**/profiles.yml
+.env
+.env.*
+!.env.example
+*service-account*.json
+*service_account*.json
+
+# python and jupyter
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# generated datasets
+product_analytics_dataset/
+*.parquet
+
+# local exports
+exports/

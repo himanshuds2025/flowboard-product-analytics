@@ -1,0 +1,344 @@
+version: 2
+
+models:
+
+  - name: mart_user_metrics
+    description: >
+      User-level analytical table combining signup, activation,
+      funnel, meaningful activity and session metrics.
+      Grain: one row per user.
+
+    columns:
+      - name: user_id
+        description: Unique user identifier.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: workspace_id
+        description: Workspace associated with the user.
+
+      - name: signup_timestamp
+        description: Timestamp when the user registered.
+
+      - name: acquisition_channel
+        description: Channel through which the user was acquired.
+
+      - name: country
+        description: User country.
+
+      - name: device_type
+        description: Device type recorded for the user.
+
+      - name: platform
+        description: Platform used by the user.
+
+      - name: industry
+        description: User's industry category.
+
+      - name: company_size
+        description: Company size category.
+
+      - name: role
+        description: User role.
+
+      - name: signup_plan
+        description: Plan selected during signup.
+
+      - name: activation_first_task_completed_at
+        description: Timestamp of the first qualifying task completion.
+
+      - name: activated_d7
+        description: Whether the user completed their first task within seven days of signup.
+
+      - name: time_to_activate_days
+        description: Elapsed time in days between signup and first qualifying task completion.
+
+      - name: signup_completed_at
+        description: Timestamp of signup completion.
+
+      - name: first_project_created_at
+        description: Timestamp of the first project creation.
+
+      - name: first_task_created_at
+        description: Timestamp of the first task creation.
+
+      - name: first_task_completed_at
+        description: Timestamp of the first task completion recorded in the funnel.
+
+      - name: active_days
+        description: Lifetime count of calendar days with meaningful product activity during the observation period.
+
+      - name: total_activity_events
+        description: Total meaningful activity events during the observation period.
+
+      - name: first_meaningful_activity_at
+        description: Timestamp of the first meaningful product activity.
+
+      - name: last_meaningful_activity_at
+        description: Timestamp of the most recent meaningful product activity.
+
+      - name: total_sessions
+        description: Total recorded sessions for the user.
+
+      - name: session_days
+        description: Number of distinct UTC calendar dates with recorded sessions.
+
+      - name: total_session_duration_seconds
+        description: Sum of all recorded session durations in seconds.
+
+      - name: avg_session_duration_seconds
+        description: Average recorded session duration in seconds.
+
+      - name: first_session_at
+        description: Start timestamp of the first recorded session.
+
+      - name: last_session_end_at
+        description: End timestamp of the last recorded session.
+
+
+  - name: mart_retention
+    description: >
+      Signup cohort retention table segmented by D7 activation status.
+      Grain: one row per signup month and activation status.
+
+    columns:
+      - name: signup_cohort_month
+        description: UTC calendar month of user signup.
+        data_tests:
+          - not_null
+
+      - name: activation_status
+        description: >
+          User activation category: activated_d7, not_activated_d7,
+          or insufficient_observation.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - activated_d7
+                  - not_activated_d7
+                  - insufficient_observation
+
+      - name: cohort_users
+        description: Number of users in the cohort segment.
+
+      - name: d1_retained_users
+        description: Users with meaningful activity on signup day plus one calendar day.
+
+      - name: d1_retention_rate
+        description: D1 retained users divided by cohort users, multiplied by 100.
+
+      - name: d7_retained_users
+        description: Users with meaningful activity on signup day plus seven calendar days.
+
+      - name: d7_retention_rate
+        description: D7 retained users divided by cohort users, multiplied by 100.
+
+      - name: d30_retained_users
+        description: Users with meaningful activity on signup day plus thirty calendar days.
+
+      - name: d30_retention_rate
+        description: D30 retained users divided by cohort users, multiplied by 100.
+
+
+  - name: mart_funnel
+    description: >
+      User conversion and drop-off metrics across the signup,
+      project creation and task completion funnel.
+      Grain: one row per acquisition channel.
+
+    columns:
+      - name: acquisition_channel
+        description: User acquisition channel.
+        data_tests:
+          - not_null
+
+      - name: total_signups
+        description: Total users entering the funnel.
+
+      - name: signup_completed_users
+        description: Users completing the signup stage.
+
+      - name: signup_completion_dropoff_users
+        description: Users who did not complete signup.
+
+      - name: signup_completion_conversion_rate_pct
+        description: Signup completed users divided by total signups, multiplied by 100.
+
+      - name: project_created_users
+        description: Users who created a project after signup completion.
+
+      - name: project_creation_dropoff_users
+        description: Signup completers who did not create a project.
+
+      - name: project_creation_conversion_rate_pct
+        description: Project creators divided by signup completers, multiplied by 100.
+
+      - name: task_created_users
+        description: Users who created a task after project creation.
+
+      - name: task_creation_dropoff_users
+        description: Project creators who did not create a task.
+
+      - name: task_creation_conversion_rate_pct
+        description: Task creators divided by project creators, multiplied by 100.
+
+      - name: task_completed_users
+        description: Users who completed a task after task creation.
+
+      - name: task_completion_dropoff_users
+        description: Task creators who did not complete a task.
+
+      - name: task_completion_conversion_rate_pct
+        description: Task completers divided by task creators, multiplied by 100.
+
+      - name: overall_signup_to_task_completion_rate_pct
+        description: Task completers divided by total signups, multiplied by 100.
+
+
+  - name: mart_experiment_impact
+    description: >
+      Assignment-based experiment outcome metrics.
+      Grain: one row per experiment, variant and outcome event.
+      Outcomes count distinct assigned users who performed
+      the relevant event within seven days after assignment.
+
+    columns:
+      - name: experiment_id
+        description: Experiment identifier.
+        data_tests:
+          - not_null
+
+      - name: experiment_name
+        description: Name of the experiment.
+
+      - name: variant
+        description: Variant assigned to the user.
+        data_tests:
+          - not_null
+
+      - name: outcome_event
+        description: Event used to measure experiment outcome.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - onboarding_step_completed
+                  - invite_sent
+                  - invite_accepted
+
+      - name: assigned_users
+        description: Total users assigned to the experiment variant.
+
+      - name: users_with_outcome_7d
+        description: Distinct assigned users performing the outcome event within seven days after assignment.
+
+      - name: outcome_rate_pct
+        description: Users with the outcome within seven days divided by assigned users, multiplied by 100.
+
+
+  - name: mart_activation
+    description: >
+      Activation performance segmented by acquisition channel.
+      Includes D7 activation rates and time-to-activation distributions.
+      Grain: one row per acquisition channel.
+
+    columns:
+      - name: acquisition_channel
+        description: User acquisition channel.
+        data_tests:
+          - not_null
+
+      - name: total_signups
+        description: Total users acquired through the channel.
+
+      - name: d7_observable_users
+        description: Users with sufficient observation time to determine D7 activation.
+
+      - name: activated_d7_users
+        description: Users completing their first task within seven days of signup.
+
+      - name: not_activated_d7_users
+        description: Observable users who did not activate within seven days.
+
+      - name: users_with_observed_activation_time
+        description: Users with an observed qualifying task completion.
+
+      - name: avg_time_to_activate_days
+        description: Average elapsed days to first task completion among observed activators.
+
+      - name: median_time_to_activate_days
+        description: Median elapsed days to first task completion among observed activators.
+
+      - name: p90_time_to_activate_days
+        description: Ninetieth percentile of time to activation among observed activators.
+
+      - name: under_1_day
+        description: Activators completing their first task in less than one day.
+
+      - name: days_1_to_3
+        description: Activators completing their first task between one and three days.
+
+      - name: days_3_to_7
+        description: Activators completing their first task between three and seven days.
+
+      - name: days_7_to_14
+        description: Activators completing their first task between seven and fourteen days.
+
+      - name: days_14_to_31
+        description: Activators completing their first task between fourteen and thirty-one days.
+
+      - name: days_31_plus
+        description: Activators taking thirty-one days or longer.
+
+      - name: d7_activation_rate_pct
+        description: D7 activated users divided by D7 observable users, multiplied by 100.
+
+      - name: under_1_day_pct
+        description: Percentage of observed activators in the under-one-day bucket.
+
+      - name: days_1_to_3_pct
+        description: Percentage of observed activators in the one-to-three-day bucket.
+
+      - name: days_3_to_7_pct
+        description: Percentage of observed activators in the three-to-seven-day bucket.
+
+      - name: days_7_to_14_pct
+        description: Percentage of observed activators in the seven-to-fourteen-day bucket.
+
+      - name: days_14_to_31_pct
+        description: Percentage of observed activators in the fourteen-to-thirty-one-day bucket.
+
+      - name: days_31_plus_pct
+        description: Percentage of observed activators in the thirty-one-days-or-longer bucket.
+
+  - name: mart_weekly_task_completing_users
+    description: >
+      Weekly count of distinct users completing at least one task.
+      Grain: one row per calendar week, Monday to Sunday (UTC).
+
+    columns:
+      - name: week_start_date
+        description: Monday date marking the start of the week.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: week_end_date
+        description: Sunday date marking the end of the week.
+
+      - name: weekly_task_completing_users
+        description: >
+          Distinct users who completed at least one task
+          during the calendar week.
+
+      - name: task_completion_events
+        description: Total task completion events during the calendar week.
+
+      - name: is_complete_week
+        description: >
+          Indicates whether the entire seven-day week falls
+          within the available observation period.
