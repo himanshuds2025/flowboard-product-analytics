@@ -1,7 +1,7 @@
-# Business problem: 
+# Business problem
 Flowboard may be failing to turn new signups into users who consistently use its collaboration product. We need to test whether this problem exists and identify its causes.
 
-#Objective:
+# Objective
 Determine where users struggle, which factors influence retention, and what product changes are justified by the evidence.
 
 	Deliverables: 
